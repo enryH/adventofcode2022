@@ -123,11 +123,76 @@ print("Monkey business: ", res[-1] * res[-2])
 # %%
 # Part 2: 10,000 rounds
 # needs to be implemented in a more efficient way
-monkeys = get_test_monkeys()
+@dataclass
+class Monkey:
+    items: list
+    operation: callable
+    mod: int
+    throw_to: dict
+
+
+
+# def get_test_monkeys():
+#     test_monkeys = [
+#         Monkey([79, 98], lambda x: x * 19, 23, {True: 2, False: 3}),
+#         Monkey(
+#             [54, 65, 75, 74], lambda x: x + 6, 19, {True: 2, False: 0}
+#         ),
+#         Monkey([79, 60, 97], lambda x: x * x, 13, {True: 1, False: 3}),
+#         Monkey([74], lambda x: x + 3, 17, {True: 0, False: 1}),
+#     ]
+#     return test_monkeys
+
+# monkeys = get_test_monkeys()    
+
+
+with open(file=FNAME_IN) as f:
+    monkeys = list()
+    for line in f:
+        line = line.strip()
+        if line.startswith("Monkey"):
+            new_monkey = list()
+        elif not line:
+            monkeys.append(new_monkey)
+        else:
+            new_monkey.append(line)
+    monkeys.append(new_monkey)
+
+# would have been better to do it manuelly
+def process_monkey(monkey: list):
+    parsed_monkey = [None] * 4
+    parsed_monkey[0] = list(map(int, monkey[0].split(":")[-1].split(",")))
+    if "+" in monkey[1]:
+        parsed_monkey[1] = lambda x: x + int(monkey[1].split("+")[-1])
+    elif "*" in monkey[1]:
+        parsed_monkey[1] = lambda x: x * int(monkey[1].split("*")[-1])
+    parsed_monkey[2] = int(monkey[2].split("by")[-1])
+    parsed_monkey[3] = {
+        True: int(monkey[3].split("monkey")[-1]),
+        False: int(monkey[4].split("monkey")[-1]),
+    }
+
+    return Monkey(*parsed_monkey)
+
+
+monkeys = list(map(process_monkey, monkeys))
+
+# would have been better to do it manuelly
+monkeys[6] = Monkey(
+    monkeys[6].items, lambda x: x * x, monkeys[6].mod, monkeys[6].throw_to
+)
+
 
 total = [0] * len(monkeys)
 
+from math import gcd
+
 def play_round(monkeys):
+    mod = 1
+    for monkey in monkeys:
+        # calculate a common denominator
+        mod *= monkey.mod
+
     for i, monkey in enumerate(monkeys):
     # Monkey throws all items one after the other (after inspecting them)
         # map opteration to all items?
@@ -135,17 +200,26 @@ def play_round(monkeys):
             total[i] += 1
             level = monkey.operation(item)
             # level = int(level / 3)  # round down
-            give_to_monkey = monkey.throw_to[monkey.test(level)]
+            devisible = level % monkey.mod == 0
+            give_to_monkey = monkey.throw_to[devisible]
+
+            level = (level % mod) # keep level in range
             monkeys[give_to_monkey].items.append(level)
         monkey.items = list() # all thrown away
 
 
-for round in range(1001): # this takes forever in the current implementation
+for round in range(10000): # this takes forever in the current implementation
     # Monkey play one at a time
     play_round(monkeys)
-    if round+1 in [1, 20, 1000, 2000, 3000]:
+    if (round+1) in [1, 20, 1000, 2000, 3000, 6000, 10000]:
         print(f'== After round {round+1}  ==')
         for i, inspected_total in enumerate(total):
             print(f"Monkey {i}: {inspected_total}")
         print('#'* 20)
+
+
+# %%
+res = sorted(total)
+print("Sorted: ", res)
+print("Monkey business: ", res[-1] * res[-2])
 # %%
