@@ -117,3 +117,38 @@ for solution in solutions:
 # %%
 # Part 2
 # Explore all posssible starting options
+possible_starts = set()
+for i in range(grid.max_row):
+    for j in range(grid.max_col):
+        if grid.grid[i,j] == 1:
+            possible_starts.add((i,j))
+        
+len(possible_starts)
+possible_starts.add(grid.start)
+# %%
+visited_starts = set()
+
+# while last not in visited:
+for start in possible_starts:
+    visited = set()
+    current = start
+    last = start
+    paths = list()
+    paths.append([start])
+    while paths:
+        path = paths.pop(0)
+        last = path[-1]
+        if last in visited:
+            continue
+        options = grid.get_options(path[-1])
+        if options:
+            for option in options:
+                new_path = path + [option]
+                if option not in path and option not in possible_starts:
+                    paths.append(new_path)
+                if option == grid.end:
+                    solutions.append(new_path)      
+        visited.add(last)  
+
+print(f"Minimum Steps: {min(map(len, solutions))-1}")
+# %%
